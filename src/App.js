@@ -1,19 +1,31 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useState} from 'react';
+import styled, {css} from 'styled-components';
 import './App.css';
+
+const Button = styled.button`
+  ${props => props.secondary && css`
+    background-color: white;
+    color: grey;
+  `}
+  ${props => props.danger && css`
+    background-color: yellow;
+  `}
+`
 
 function App() {
   const [editIndex, setEditIndex] = useState(null);
-  const [isCatat, setIsCatat] = useState(false);
+  const [isNote, setIsNote] = useState(false);
   const [items, setItems] = useState([]);
   const [todo, setTodo] = useState('');
 
-  const textarea = useRef();
+  // bisa menggunakan autofocus
+  /* const textarea = useRef();
 
   useEffect(() => {
-    if(isCatat && textarea.current) {
+    if(isNote && textarea.current) {
       textarea.current.focus();
     }
-  }, [isCatat]);
+  }, [isNote]); */
 
   const saveItem = (index, value) => {
     let temp = items;
@@ -33,33 +45,43 @@ function App() {
     setEditIndex(null);
   }
 
+  const handleInsert = () => {
+    if(todo) {
+      let temp = items;
+
+      temp.push(todo);
+
+      setItems(temp);
+      setIsNote(false);
+      setTodo('');
+    }
+  }
+
+  const handleCancel = () => {
+    setIsNote(false);
+  }
+
   return (
     <div className="App">
       <header className="App-header">
-        <Container visible={isCatat}>
-          <textarea placeholder="Apa yang ingin anda kerjakan?" ref={textarea} value={todo} onChange={e => {setTodo(e.target.value)}} />
+        {isNote ? (
+        <Container visible={isNote}>
+          { /* <textarea placeholder="Apa yang ingin anda kerjakan?" ref={textarea} value={todo} onChange={e => {setTodo(e.target.value)}} /> */ }
+          <textarea placeholder="Apa yang ingin anda kerjakan?" value={todo} onChange={e => {setTodo(e.target.value)}} autoFocus />
           <br />
-          <Button onClick={() => {
-            if(todo) {
-              let temp = items;
-  
-              temp.push(todo);
-
-              setItems(temp);
-              setIsCatat(false);
-              setTodo('');
-            }
-          }}>Catat!</Button>
-          <Button secondary onClick={() => {setIsCatat(false)}}>Tidak Jadi</Button>
+          <Button onClick={handleInsert}>Catat!</Button>
+          <Button secondary onClick={handleCancel}>Tidak Jadi</Button>
         </Container>
-        <Container visible={!isCatat}>
+        ) : (
+        <Container visible={!isNote}>
           <Button onClick={() => {
             setEditIndex(null);
-            setIsCatat(true);
+            setIsNote(true);
           }}>Aku ingin mengerjakan sesuatu!</Button>
         </Container>
+        )}
         {items.map((item,index) => (
-          <ToDo key={index} index={index} value={item} isEdit={index === editIndex} setEditIndex={setEditIndex} setIsCatat={setIsCatat} saveItem={saveItem} deleteItem={deleteItem} />
+          <ToDo key={index} index={index} value={item} isEdit={index === editIndex} setEditIndex={setEditIndex} setIsNote={setIsNote} saveItem={saveItem} deleteItem={deleteItem} />
         ))}
       </header>
     </div>
@@ -68,43 +90,61 @@ function App() {
 
 function ToDo(props) {
   const [todo, setTodo] = useState(props.value);
+  const style = {marginTop:"10px"};
+
+  const handleEdit = () => {
+    setTodo(props.value);
+
+    props.setIsNote(false);
+    props.setEditIndex(props.index);
+  }
+
+  const handleUpdate = () => {
+    if(todo)
+      props.saveItem(props.index, todo);
+  }
+
+  const handleCancel = () => {
+    props.setEditIndex(null);
+  }
+
+  const handleDelete = () => {
+    props.deleteItem(props.index)
+  }
 
   return (
-    <div style={{marginTop:"10px"}}>
-      <Container visible={props.isEdit}>
+    <div style={style}>
+      {props.isEdit ? (
+      <Container>
         <textarea placeholder={props.value} value={todo} onChange={e => {setTodo(e.target.value)}} />
         <br />
-        <Button onClick={() => {
-          if(todo)
-            props.saveItem(props.index, todo);
-        }}>Simpan!</Button>
-        <Button secondary onClick={() => {props.setEditIndex(null)}}>Tidak Jadi</Button>
-        <Button danger onClick={() => {props.deleteItem(props.index)}}>Hapus!</Button>
+        <Button onClick={handleUpdate}>Simpan!</Button>
+        <Button secondary onClick={handleCancel}>Tidak Jadi</Button>
+        <Button danger onClick={handleDelete}>Hapus!</Button>
       </Container>
-      <Container visible={!props.isEdit}>
-        <div onClick={() => {
-          setTodo(props.value);
-
-          props.setIsCatat(false);
-          props.setEditIndex(props.index);
-        }}>
-          {props.value}
-        </div>
+      ) : (
+      <Container>
+        <div onClick={handleEdit}>{props.value}</div>
       </Container>
+      )}
     </div>
   )
 }
 
 function Container(props) {
-  let attribute = {};
+  // show hide diserahkan ke rendering react, jadinya div biasa hehehe
+  /* let attribute = {};
 
   if(!props.visible)
     attribute.style = {display: 'none'};
 
-  return (<div {...attribute}>{props.children}</div>);
+  return (<div {...attribute}>{props.children}</div>); */
+
+  return (<div>{props.children}</div>);
 }
 
-function Button(props) {
+// menggunakan styled components di atas
+/* function Button(props) {
   let attribute = {
     onClick: props.onClick,
     style: {}
@@ -120,6 +160,6 @@ function Button(props) {
     attribute.style.backgroundColor = 'yellow';
 
   return (<button {...attribute}>{props.children}</button>);
-}
+} */
 
 export default App;
